@@ -1,2 +1,4 @@
-echo '{"flights":{},"last_cleanup":null}' > history.json
-git add history.json && git commit -m "init history" && git push
+{
+  "flights": {},
+  "last_cleanup": "2026-09-11T02:52:00.437554+00:00"
+}
