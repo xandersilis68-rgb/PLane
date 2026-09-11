@@ -1,4 +1,16 @@
 {
-  "flights": {},
-  "last_cleanup": "2026-09-11T02:52:00.437554+00:00"
+  "flights": {
+    "QR915|A7BEE|20260911": {
+      "status": "en-route",
+      "alerted_statuses": [
+        "en-route"
+      ],
+      "last_seen": 1789107891,
+      "reg": "A7-BEE",
+      "type": "B77W",
+      "flight": "QR915",
+      "route": "AKL→ADL"
+    }
+  },
+  "last_cleanup": "2026-09-11T06:24:48.153478+00:00"
 }
