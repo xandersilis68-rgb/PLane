@@ -1,16 +1,5 @@
 {
   "flights": {
-    "QR915|A7BEQ|20260913": {
-      "status": "en-route",
-      "alerted_statuses": [
-        "en-route"
-      ],
-      "last_seen": 1789260970,
-      "reg": "A7-BEQ",
-      "type": "B77W",
-      "flight": "QR915",
-      "route": "ADL→DOH"
-    },
     "QR915|A7BEK|20260913": {
       "status": "en-route",
       "alerted_statuses": [
@@ -56,5 +45,5 @@
       "route": "DOH→ADL"
     }
   },
-  "last_cleanup": "2026-09-13T17:43:37.272244+00:00"
+  "last_cleanup": "2026-09-13T19:52:26.890083+00:00"
 }
