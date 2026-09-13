@@ -1,16 +1,5 @@
 {
   "flights": {
-    "QR914|A7BAF|20260912": {
-      "status": "en-route",
-      "alerted_statuses": [
-        "en-route"
-      ],
-      "last_seen": 1789246974,
-      "reg": "A7-BAF",
-      "type": "B77W",
-      "flight": "QR914",
-      "route": "DOH→ADL"
-    },
     "QR915|A7BEQ|20260913": {
       "status": "en-route",
       "alerted_statuses": [
@@ -54,7 +43,18 @@
       "type": "B77W",
       "flight": "QR914",
       "route": "ADL→AKL"
+    },
+    "QR914|A7BAG|20260913": {
+      "status": "en-route",
+      "alerted_statuses": [
+        "en-route"
+      ],
+      "last_seen": 1789321420,
+      "reg": "A7-BAG",
+      "type": "B77W",
+      "flight": "QR914",
+      "route": "DOH→ADL"
     }
   },
-  "last_cleanup": "2026-09-13T14:41:14.734306+00:00"
+  "last_cleanup": "2026-09-13T17:43:37.272244+00:00"
 }
