@@ -27,7 +27,7 @@
       "alerted_statuses": [
         "en-route"
       ],
-      "last_seen": 1789278229,
+      "last_seen": 1789310477,
       "reg": "A7-BEK",
       "type": "B77W",
       "flight": "QR915",
@@ -56,5 +56,5 @@
       "route": "ADL→AKL"
     }
   },
-  "last_cleanup": "2026-09-13T10:38:38.621888+00:00"
+  "last_cleanup": "2026-09-13T14:41:14.734306+00:00"
 }
