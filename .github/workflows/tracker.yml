@@ -1,0 +1,31 @@
+name: YPAD Heavy & Special Aircraft Tracker
+
+on:
+  schedule:
+    # Runs at minute 23 of every hour. Avoiding minute 0 prevents 
+    # cloud server traffic delays, making execution more reliable.
+    - cron: '23 * * * *'
+  workflow_dispatch: # This adds a manual "Run now" button in your GitHub panel
+
+jobs:
+  check-flights-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Clone Code to Cloud
+        uses: actions/checkout@v4
+
+      - name: 2. Deploy Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 3. Install Requirements
+        run: pip install requests
+
+      - name: 4. Execute Tracker with Cloud Secrets
+        env:
+          AIRLABS_API_KEY: ${{ secrets.AIRLABS_API_KEY }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          SENDER_PASSWORD: ${{ secrets.SENDER_PASSWORD }}
+          RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
+        run: python tracker.py
