@@ -3,7 +3,7 @@ import sys
 import requests
 
 # --- DEBUG INITIALISATION ---
-print("⚙️ [DEBUG] Starting YPAD Tracker Engine (Discord Edition)...")
+print("⚙️ [DEBUG] Starting YPAD Tracker Engine (Discord Fixed Edition)...")
 
 # 1. VERIFY CLOUD SECRETS ARE CONNECTED
 API_KEY = os.getenv("AIRLABS_API_KEY")
@@ -100,7 +100,9 @@ def send_to_discord(flight_list):
     try:
         response = requests.post(WEBHOOK_URL, json=payload, timeout=10)
         print(f"🚀 [DEBUG] Discord Gateway Response Code: {response.status_code}")
-        if response.status_code in:
+        
+        # FIXED: Correct check for successful HTTP transmission codes (200-299 range)
+        if 200 <= response.status_code < 300:
             print("🎉 [DEBUG] Discord ping delivered flawlessly. Check your chat channel!")
         else:
             print(f"❌ [DEBUG ERROR] Discord rejected message payload: {response.text}")
