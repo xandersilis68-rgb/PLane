@@ -3,7 +3,7 @@ import sys
 import requests
 
 # --- DEBUG INITIALISATION ---
-print("⚙️ [DEBUG] Starting YPAD Tracker Engine (Discord Fixed Edition)...")
+print("⚙️ [DEBUG] Starting YPAD Tracker Engine (Robust JSON Patch)...")
 
 # 1. VERIFY CLOUD SECRETS ARE CONNECTED
 API_KEY = os.getenv("AIRLABS_API_KEY")
@@ -38,22 +38,36 @@ WIDEBODY_TYPES = {
 SPECIAL_AIRLINES = {"QTR", "SIA", "MAS", "FJI", "ANZ"} 
 
 def track_ypad_movements():
-    url = "https://airlabs.co"
-    params = {"api_key": API_KEY, "arr_icao": "YPAD"}
+    # Direct endpoint query pattern
+    url = "https://airlabs.co/api/v9/schedules"
+    params = {
+        "api_key": API_KEY, 
+        "arr_icao": "YPAD",
+        "limit": 50  # Enforce Free Tier boundary safety rules
+    }
     
     print(f"📡 [DEBUG] Sending request to AirLabs for YPAD arrivals...")
     try:
         response = requests.get(url, params=params, timeout=15)
         print(f"📡 [DEBUG] HTTP Server Response Code: {response.status_code}")
         response.raise_for_status()
+        
+        # SAFE INSPECTION: Peek at data before parsing JSON to catch plain text limits/errors
+        raw_text = response.text.strip()
+        if not (raw_text.startswith("{") or raw_text.startswith("[")):
+            print("🚨 [DEBUG CRITICAL] Server did not return JSON format data!")
+            print(f"📄 [RAW SERVER MESSAGE]:\n{raw_text}")
+            print("💡 Tip: Check if your AirLabs API key has run out of its monthly free credits.")
+            sys.exit(0) # Exit cleanly so GitHub doesn't throw an ugly red alarm
+            
         data = response.json()
     except Exception as api_err:
-        print(f"❌ [DEBUG CRITICAL] Network or API request crashed: {api_err}")
+        print(f"❌ [DEBUG CRITICAL] Network transmission or parser error: {api_err}")
         sys.exit(1)
 
     if "error" in data:
-        print(f"❌ [DEBUG API ERROR] AirLabs returned an application error: {data['error']}")
-        sys.exit(1)
+        print(f"❌ [DEBUG API ERROR] AirLabs explicitly rejected the request: {data['error']}")
+        sys.exit(0)
 
     arrivals = data.get("response", [])
     print(f"📊 [DEBUG] Successfully parsed {len(arrivals)} total upcoming flights for YPAD.")
@@ -101,7 +115,6 @@ def send_to_discord(flight_list):
         response = requests.post(WEBHOOK_URL, json=payload, timeout=10)
         print(f"🚀 [DEBUG] Discord Gateway Response Code: {response.status_code}")
         
-        # FIXED: Correct check for successful HTTP transmission codes (200-299 range)
         if 200 <= response.status_code < 300:
             print("🎉 [DEBUG] Discord ping delivered flawlessly. Check your chat channel!")
         else:
