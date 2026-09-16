@@ -5,6 +5,9 @@ on:
     - cron: '23 * * * *' # Automatically runs every hour at minute 23
   workflow_dispatch: # Puts a manual "Run Now" button in GitHub
 
+permissions:
+  contents: write # Allows the workflow to save and commit data.json back to the repository
+
 jobs:
   check-flights-job:
     runs-on: ubuntu-latest
@@ -25,3 +28,16 @@ jobs:
           AIRLABS_API_KEY: ${{ secrets.AIRLABS_API_KEY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: python tracker.py
+
+      - name: 5. Commit and Deploy data.json to GitHub Pages Environment
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@://github.com"
+          git add data.json
+          # Check if there are changes before attempting to commit, preventing error crashes
+          if git diff-index --quiet HEAD --; then
+            echo "No structural movement updates in schedule parameters. Skipping update cycle."
+          else
+            git commit -m "🤖 Automate tracker engine telemetry sync [Skip GitHub Actions Actions]"
+            git push origin main
+          fi
