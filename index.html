@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YPAD Heavy & Special Tracker Dashboard</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #0f172a; color: #e2e8f0; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 20px; margin-bottom: 20px; }
+        h1 { margin: 0; font-size: 24px; color: #38bdf8; }
+        .meta-text { margin: 5px 0 0 0; color: #94a3b8; font-size: 14px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 100%)); gap: 15px; }
+        .card { background-color: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .plane-title { font-size: 18px; font-weight: bold; margin: 0 0 4px 0; color: #f8fafc; }
+        .plane-meta { font-size: 13px; color: #94a3b8; margin-bottom: 12px; }
+        .data-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px; }
+        .data-label { color: #94a3b8; }
+        .badge-container { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+        .badge { background-color: #0369a1; color: #e0f2fe; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .no-data { text-align: center; padding: 4px 0; color: #94a3b8; grid-column: 1 / -1; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>✈️ YPAD Heavies & Target Tracking Dashboard</h1>
+            <p id="update-timestamp" class="meta-text">Loading latest workflow data snapshot...</p>
+        </div>
+    </header>
+
+    <div id="tracker-grid" class="grid">
+        <!-- Live targets map out layout rows injection hook -->
+    </div>
+</div>
+
+<script>
+    async function loadDashboardData() {
+        const grid = document.getElementById('tracker-grid');
+        const timestamp = document.getElementById('update-timestamp');
+        
+        try {
+            // Read tracking snapshots published locally inside workspace engine context block
+            const response = await fetch('./data.json?t=' + new Date().getTime());
+            if (!response.ok) throw new Error("Data asset missing");
+            const data = await response.json();
+            
+            timestamp.textContent = `Last Checked: ${data.last_updated} | Active Targets Monitored: ${data.total_tracked_count}`;
+            grid.innerHTML = '';
+
+            if (data.assets.length === 0) {
+                grid.innerHTML = '<div class="card no-data"><h3>🧘 Clear Skies</h3><p>No targeted registrations or widebody frames are currently listed in the immediate schedules.</p></div>';
+                return;
+            }
+
+            data.assets.forEach(asset => {
+                const badges = asset.reasons.map(r => `<span class="badge">${r}</span>`).join('');
+                const cardHTML = `
+                    <div class="card">
+                        <div class="plane-title">${asset.flight}</div>
+                        <div class="plane-meta">${asset.aircraft} • Registration: <strong>${asset.rego}</strong></div>
+                        <div class="data-row"><span class="data-label">Origin Airport:</span> <strong>${asset.origin}</strong></div>
+                        <div class="data-row"><span class="data-label">Expected Arrival:</span> <strong>${asset.arrival_time}</strong></div>
+                        <div class="data-row"><span class="data-label">Operator Airline:</span> <strong>${asset.airline}</strong></div>
+                        <div class="badge-container">${badges}</div>
+                    </div>
+                `;
+                grid.innerHTML += cardHTML;
+            });
+        } catch (err) {
+            console.error(err);
+            timestamp.textContent = "Offline / Standby Status";
+            grid.innerHTML = '<div class="card no-data"><p style="color: #ef4444;">No data file found yet. The workspace dashboard updates automatically on the next scheduled runner pass cycle.</p></div>';
+        }
+    }
+    loadDashboardData();
+</script>
+</body>
+</html>
