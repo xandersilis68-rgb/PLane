@@ -1,6 +1,8 @@
 import os
 import sys
 import requests
+import json
+from datetime import datetime
 
 # --- DEBUG INITIALISATION ---
 print("⚙️ [DEBUG] Starting YPAD Tracker Engine (Robust JSON Patch)...")
@@ -38,12 +40,11 @@ WIDEBODY_TYPES = {
 SPECIAL_AIRLINES = {"QTR", "SIA", "MAS", "FJI", "ANZ"} 
 
 def track_ypad_movements():
-    # Direct endpoint query pattern
     url = "https://airlabs.co/api/v9/schedules"
     params = {
         "api_key": API_KEY, 
         "arr_icao": "YPAD",
-        "limit": 50  # Enforce Free Tier boundary safety rules
+        "limit": 50  
     }
     
     print(f"📡 [DEBUG] Sending request to AirLabs for YPAD arrivals...")
@@ -52,13 +53,10 @@ def track_ypad_movements():
         print(f"📡 [DEBUG] HTTP Server Response Code: {response.status_code}")
         response.raise_for_status()
         
-        # SAFE INSPECTION: Peek at data before parsing JSON to catch plain text limits/errors
         raw_text = response.text.strip()
         if not (raw_text.startswith("{") or raw_text.startswith("[")):
             print("🚨 [DEBUG CRITICAL] Server did not return JSON format data!")
-            print(f"📄 [RAW SERVER MESSAGE]:\n{raw_text}")
-            print("💡 Tip: Check if your AirLabs API key has run out of its monthly free credits.")
-            sys.exit(0) # Exit cleanly so GitHub doesn't throw an ugly red alarm
+            sys.exit(0) 
             
         data = response.json()
     except Exception as api_err:
@@ -73,6 +71,7 @@ def track_ypad_movements():
     print(f"📊 [DEBUG] Successfully parsed {len(arrivals)} total upcoming flights for YPAD.")
 
     matches = []
+    dashboard_assets = []
 
     for idx, flight in enumerate(arrivals):
         rego = str(flight.get("reg_number", "")).upper().strip()
@@ -82,20 +81,41 @@ def track_ypad_movements():
         origin = flight.get("dep_iata", "UNK")
         arr_time = flight.get("arr_time", "Unknown Time")
 
-        # Matching Logic Rules
         match_rego = rego in TARGET_REGOS
         match_widebody = aircraft in WIDEBODY_TYPES
         match_special_carrier = airline in SPECIAL_AIRLINES and match_widebody
 
         if match_rego or match_widebody:
             trigger_reason = []
-            if match_rego: trigger_reason.append(f"🎯 Specific Rego ({rego})")
-            if match_widebody: trigger_reason.append(f"✈️ Widebody Framework ({aircraft})")
-            if match_special_carrier: trigger_reason.append("🌏 Flagship Long-Haul Entry")
+            if match_rego: trigger_reason.append(f"Specific Rego ({rego})")
+            if match_widebody: trigger_reason.append(f"Widebody Framework ({aircraft})")
+            if match_special_carrier: trigger_reason.append("Flagship Long-Haul Entry")
 
             hit_summary = f"**Flight {flight_num}** ({aircraft} | Rego: `{rego if rego else 'N/A'}`) from **{origin}**\n↳ 🕒 Scheduled Arrival: `{arr_time}`\n↳ 🏷️ Reason: *{', '.join(trigger_reason)}*"
             print(f"🎯 [DEBUG HIT] Match found at row index {idx}: {flight_num}")
             matches.append(hit_summary)
+
+            # Package structured payload data safely for the GitHub Pages static front-end
+            dashboard_assets.append({
+                "flight": flight_num,
+                "rego": rego if rego else "N/A",
+                "aircraft": aircraft,
+                "airline": airline,
+                "origin": origin,
+                "arrival_time": arr_time,
+                "reasons": trigger_reason
+            })
+
+    # Save output data state directly into the workspace repository environment
+    export_payload = {
+        "last_updated": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
+        "total_tracked_count": len(dashboard_assets),
+        "assets": dashboard_assets
+    }
+    
+    with open("data.json", "w") as f:
+        json.dump(export_payload, f, indent=4)
+    print("💾 [DEBUG] Local workflow snapshot data.json state written out to directory successfully.")
 
     if matches:
         print(f"✉️ [DEBUG] Found {len(matches)} alerts. Assembling Discord payload...")
@@ -113,10 +133,8 @@ def send_to_discord(flight_list):
     print(f"🚀 [DEBUG] Sending POST payload down the Discord webhook pipeline...")
     try:
         response = requests.post(WEBHOOK_URL, json=payload, timeout=10)
-        print(f"🚀 [DEBUG] Discord Gateway Response Code: {response.status_code}")
-        
         if 200 <= response.status_code < 300:
-            print("🎉 [DEBUG] Discord ping delivered flawlessly. Check your chat channel!")
+            print("🎉 [DEBUG] Discord ping delivered flawlessly.")
         else:
             print(f"❌ [DEBUG ERROR] Discord rejected message payload: {response.text}")
     except Exception as discord_err:
